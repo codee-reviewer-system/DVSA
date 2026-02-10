@@ -64,3 +64,5 @@ def is_safe(s):
         return False
     return parse.quote(s, safe="._-").replace("%", "") == s
 
+
+# noop
