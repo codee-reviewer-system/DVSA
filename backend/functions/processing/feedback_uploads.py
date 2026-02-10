@@ -6,7 +6,7 @@ from botocore.exceptions import ClientError
 from botocore.client import Config
 import uuid
 from urllib import parse
-#comment
+#comments
 DEFAULT_EXPIRES_SECONDS = 120
 MAX_EXPIRES_SECONDS = 600
 
