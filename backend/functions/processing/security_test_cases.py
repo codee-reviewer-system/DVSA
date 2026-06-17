@@ -352,3 +352,107 @@ def create_temp_file(data):
     with open(filename, "w") as f:
         f.write(data)
     return filename
+
+
+# ============================================================
+# PR 2: NEW VULNERABILITIES BELOW THIS LINE
+# These reference variables defined ABOVE (unchanged in PR 2)
+# This tests whether worktrees can trace taint across unchanged code
+# ============================================================
+
+
+# ============================================================
+# VULNERABILITY 26: SQL Injection via cross-function taint
+# 'user_id' parameter comes from get_user_v1 (line 25, unchanged)
+# New function uses it in a different query (changed lines)
+# ============================================================
+
+def get_user_orders(user_id):
+    """References user_id from get_user_v1 context - NEW function."""
+    uid = user_id
+    conn = sqlite3.connect("orders.db")
+    query = "SELECT * FROM orders WHERE user_id = " + uid  # SQL injection
+    return conn.execute(query).fetchall()
+
+
+# ============================================================
+# VULNERABILITY 27: Command Injection via cross-function taint
+# 'hostname' from ping_host context (line 108, unchanged)
+# New function reuses it in a different command (changed lines)
+# ============================================================
+
+def check_host_status(hostname):
+    """References hostname from ping_host context - NEW function."""
+    host = hostname
+    output = subprocess.run(
+        f"curl -s http://{host}/health",  # Command injection
+        shell=True,
+        capture_output=True,
+        text=True
+    )
+    return output.stdout
+
+
+# ============================================================
+# VULNERABILITY 28: XSS via cross-function taint
+# 'user_name' from render_user_profile context (line 85, unchanged)
+# New function uses it unsanitized (changed lines)
+# ============================================================
+
+def render_user_card(user_name):
+    """References user_name from render_user_profile context - NEW function."""
+    name = user_name
+    return f"<article class='user-card'><h2>{name}</h2></article>"  # XSS
+
+
+# ============================================================
+# VULNERABILITY 29: Path Traversal via cross-function taint
+# 'filename' from read_file context (line 143, unchanged)
+# New function reuses it (changed lines)
+# ============================================================
+
+def backup_file(filename):
+    """References filename from read_file context - NEW function."""
+    target = filename
+    backup_path = "/tmp/backups/" + target  # Path traversal
+    with open(backup_path, "w") as f:
+        f.write("backup")
+    return backup_path
+
+
+# ============================================================
+# VULNERABILITY 30: Unsafe Deserialization via cross-function taint
+# 'data' from load_user_data context (line 208, unchanged)
+# New function passes it to pickle (changed lines)
+# ============================================================
+
+def clone_user_data(data):
+    """References data from load_user_data context - NEW function."""
+    raw = data
+    copy = pickle.loads(raw)  # Unsafe deserialization
+    return copy
+
+
+# ============================================================
+# VULNERABILITY 31: Hardcoded Secret in New Function
+# Completely new function with hardcoded credential (changed lines)
+# ============================================================
+
+def get_redis_password():
+    """New hardcoded secret - all lines changed."""
+    redis_pass = "redis_default_pass_2024"  # Hardcoded secret
+    return redis_pass
+
+
+# ============================================================
+# VULNERABILITY 32: SSRF via cross-function taint
+# 'url' from fetch_url context (line 268, unchanged)
+# New function reuses it (changed lines)
+# ============================================================
+
+def mirror_url(url):
+    """References url from fetch_url context - NEW function."""
+    target = url
+    import urllib.request
+    response = urllib.request.urlopen(target)  # SSRF
+    return response.read()
